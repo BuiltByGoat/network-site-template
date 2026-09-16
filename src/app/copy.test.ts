@@ -26,15 +26,16 @@ const BUILDER_AD_COPY = [
 ];
 
 describe("public player copy", () => {
-  const source = PUBLIC_SOURCES.map((file) =>
-    readFileSync(file, "utf8"),
-  ).join("\n");
+  const source = PUBLIC_SOURCES.map((file) => readFileSync(file, "utf8")).join(
+    "\n",
+  );
 
   it("does not advertise the developer template on the landing page", () => {
     for (const phrase of BUILDER_AD_COPY) {
-      expect(source, `public markup must not contain “${phrase}”`).not.toContain(
-        phrase,
-      );
+      expect(
+        source,
+        `public markup must not contain “${phrase}”`,
+      ).not.toContain(phrase);
     }
   });
 });

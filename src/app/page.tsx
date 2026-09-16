@@ -70,8 +70,8 @@ export default function HomePage() {
             <p>Powered by Megapot</p>
             <strong>Fair draws. Public results.</strong>
             <p className="aside-note">
-              Play from this site. Winners stay public. This page never
-              shows a referral code.
+              Play from this site. Winners stay public. This page never shows a
+              referral code.
             </p>
             <a
               className="aside-link"
@@ -109,8 +109,8 @@ export default function HomePage() {
               <span>03 / Fair</span>
               <h3>Anyone can check</h3>
               <p>
-                Draws stay public. Latest results live where anyone can
-                read them.
+                Draws stay public. Latest results live where anyone can read
+                them.
               </p>
             </article>
           </div>
@@ -118,8 +118,7 @@ export default function HomePage() {
 
         <footer className="foot">
           <p>
-            {name} · play Megapot · no referral codes or wallets on this
-            page
+            {name} · play Megapot · no referral codes or wallets on this page
           </p>
           <p>
             <a href={hub} data-cta="hub" rel="noreferrer">
