@@ -49,8 +49,7 @@ export default function HomePage() {
             <h1>Ship a jackpot front door.</h1>
             <p className="lede">
               A first-party Megapot Network shell. Play hops through a private
-              /go. Dashboard and results stay public, UTM-stamped, and empty of
-              attribution secrets.
+              /go. Dashboard and latest results stay public and UTM-stamped.
             </p>
             <div className="actions">
               <a className="play" href={PLAY_HREF} data-cta="play">
@@ -75,11 +74,11 @@ export default function HomePage() {
             </div>
           </div>
           <aside className="hero-aside">
-            <p>Attribution</p>
-            <strong>Host env only.</strong>
+            <p>Fair draws</p>
+            <strong>Public results.</strong>
             <p className="aside-note">
-              Destination URL stays in MEGAPOT_PLAY_DESTINATION. This page never
-              prints a referral code.
+              Every jackpot is drawn in the open. Latest results stay on the
+              public books.
             </p>
           </aside>
         </section>
@@ -98,7 +97,7 @@ export default function HomePage() {
             <h2>Live look-up</h2>
             <p>
               Dashboard stays on the public Megapot origin. Latest results go to
-              megapotresults.com — campaign params, not secrets.
+              megapotresults.com.
             </p>
           </article>
           <article className="prop">
@@ -112,10 +111,7 @@ export default function HomePage() {
         </section>
 
         <footer className="foot">
-          <p>
-            {name} · privacy-clean footer · no referral codes, wallet addresses,
-            or invite paths
-          </p>
+          <p>{name} · Megapot Network</p>
           <p>
             <a href={hub} data-cta="hub" rel="noreferrer">
               Megapot Network
