@@ -22,7 +22,7 @@ const name = siteName();
 export const metadata: Metadata = {
   title: documentTitle(name),
   description:
-    "First-party Megapot Network site template. Play hops through a private /go; dashboard and results stay public.",
+    "Play Megapot from this page. Daily jackpot, public results, one Play button.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

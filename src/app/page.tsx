@@ -31,11 +31,9 @@ export default function HomePage() {
             {name}
           </div>
           <nav className="nav" aria-label="Primary">
+            <a href="#how">How it works</a>
             <a href={results} data-cta="results" rel="noreferrer">
               Results
-            </a>
-            <a href={dashboard} data-cta="dashboard" rel="noreferrer">
-              Dashboard
             </a>
             <a className="play" href={PLAY_HREF} data-cta="play">
               Play
@@ -45,24 +43,15 @@ export default function HomePage() {
 
         <section className="hero">
           <div>
-            <p className="kicker">Network template · v1</p>
-            <h1>Ship a jackpot front door.</h1>
+            <p className="kicker">Daily jackpot · Live now</p>
+            <h1>Play the daily pot.</h1>
             <p className="lede">
-              A first-party Megapot Network shell. Play hops through a private
-              /go. Dashboard and results stay public, UTM-stamped, and empty of
-              attribution secrets.
+              Megapot is the onchain lottery. One ticket puts you in
+              today&apos;s draw. Check winners in the open.
             </p>
             <div className="actions">
               <a className="play" href={PLAY_HREF} data-cta="play">
                 Play the jackpot
-              </a>
-              <a
-                className="ghost"
-                href={dashboard}
-                data-cta="dashboard"
-                rel="noreferrer"
-              >
-                Open dashboard
               </a>
               <a
                 className="ghost"
@@ -72,49 +61,65 @@ export default function HomePage() {
               >
                 Latest results
               </a>
+              <a className="ghost" href="#how">
+                How it works
+              </a>
             </div>
           </div>
           <aside className="hero-aside">
-            <p>Attribution</p>
-            <strong>Host env only.</strong>
+            <p>Powered by Megapot</p>
+            <strong>Fair draws. Public results.</strong>
             <p className="aside-note">
-              Destination URL stays in MEGAPOT_PLAY_DESTINATION. This page never
-              prints a referral code.
+              Play from this site. Winners stay public. This page never
+              shows a referral code.
             </p>
+            <a
+              className="aside-link"
+              href={dashboard}
+              data-cta="dashboard"
+              rel="noreferrer"
+            >
+              Your tickets
+            </a>
           </aside>
         </section>
 
-        <section className="props" aria-label="Why this shell">
-          <article className="prop">
-            <span>01 / Hop</span>
-            <h2>Private /go</h2>
-            <p>
-              The Play CTA is a local hop. Cloudflare Pages reads the play
-              destination at request time and 302s with campaign UTMs.
-            </p>
-          </article>
-          <article className="prop">
-            <span>02 / Books</span>
-            <h2>Live look-up</h2>
-            <p>
-              Dashboard stays on the public Megapot origin. Latest results go to
-              megapotresults.com — campaign params, not secrets.
-            </p>
-          </article>
-          <article className="prop">
-            <span>03 / Ship</span>
-            <h2>Clone, export</h2>
-            <p>
-              Static Next.js to out/, then Cloudflare Pages. Cribble tokens:
-              black, green, ember, ice.
-            </p>
-          </article>
+        <section id="how" className="how" aria-labelledby="how-heading">
+          <h2 id="how-heading" className="section-label">
+            How it works
+          </h2>
+          <div className="props">
+            <article className="prop">
+              <span>01 / Enter</span>
+              <h3>Simple tickets</h3>
+              <p>
+                Tap Play, buy a ticket, and you&apos;re in the draw. No extra
+                steps on this page.
+              </p>
+            </article>
+            <article className="prop">
+              <span>02 / Jackpot</span>
+              <h3>A prize worth chasing</h3>
+              <p>
+                One pot, drawn daily. Play small. The jackpot is the whole
+                point.
+              </p>
+            </article>
+            <article className="prop">
+              <span>03 / Fair</span>
+              <h3>Anyone can check</h3>
+              <p>
+                Draws stay public. Latest results live where anyone can
+                read them.
+              </p>
+            </article>
+          </div>
         </section>
 
         <footer className="foot">
           <p>
-            {name} · privacy-clean footer · no referral codes, wallet addresses,
-            or invite paths
+            {name} · play Megapot · no referral codes or wallets on this
+            page
           </p>
           <p>
             <a href={hub} data-cta="hub" rel="noreferrer">
