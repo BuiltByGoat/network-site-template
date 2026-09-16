@@ -1,5 +1,5 @@
 import { PUBLIC_MEGAPOT_ORIGIN } from "./origin";
-import { withUtms } from "./utms";
+import { resolveUtms, type UtmEnv, withUtms } from "./utms";
 
 function isSafeHttpUrl(value: string): boolean {
   try {
@@ -20,6 +20,9 @@ export function resolvePlayDestination(envValue: string | undefined): string {
   return trimmed;
 }
 
-export function buildPlayRedirect(envValue: string | undefined): string {
-  return withUtms(resolvePlayDestination(envValue));
+export function buildPlayRedirect(
+  envValue: string | undefined,
+  utmEnv: UtmEnv = {},
+): string {
+  return withUtms(resolvePlayDestination(envValue), resolveUtms(utmEnv));
 }

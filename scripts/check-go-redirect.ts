@@ -10,7 +10,18 @@ import {
   REQUIRED_GO_FUNCTION_FILES,
   routesJsonForcesGoFunction,
 } from "../src/lib/go-routes";
-import { DEFAULT_UTMS } from "../src/lib/utms";
+
+const LIVE_UTMS = {
+  MEGAPOT_UTM_SOURCE: "clone-host.example",
+  MEGAPOT_UTM_MEDIUM: "clone",
+  MEGAPOT_UTM_CAMPAIGN: "network-clone",
+} as const;
+
+const LIVE_UTM_PARAMS = {
+  utm_source: LIVE_UTMS.MEGAPOT_UTM_SOURCE,
+  utm_medium: LIVE_UTMS.MEGAPOT_UTM_MEDIUM,
+  utm_campaign: LIVE_UTMS.MEGAPOT_UTM_CAMPAIGN,
+} as const;
 
 const ROOT = path.resolve(process.cwd(), process.argv[2] ?? "out");
 const PORT = Number(process.env.GO_CHECK_PORT ?? "4191");
@@ -100,6 +111,12 @@ async function assertLiveRedirects(): Promise<void> {
       String(PORT),
       "--ip",
       "127.0.0.1",
+      "--binding",
+      `MEGAPOT_UTM_SOURCE=${LIVE_UTMS.MEGAPOT_UTM_SOURCE}`,
+      "--binding",
+      `MEGAPOT_UTM_MEDIUM=${LIVE_UTMS.MEGAPOT_UTM_MEDIUM}`,
+      "--binding",
+      `MEGAPOT_UTM_CAMPAIGN=${LIVE_UTMS.MEGAPOT_UTM_CAMPAIGN}`,
     ],
     {
       cwd: process.cwd(),
@@ -127,9 +144,9 @@ async function assertLiveRedirects(): Promise<void> {
       }
 
       const location = response.headers.get("location");
-      if (!location || !locationHasDefaultUtms(location, DEFAULT_UTMS)) {
+      if (!location || !locationHasDefaultUtms(location, LIVE_UTM_PARAMS)) {
         throw new Error(
-          `${pathname} Location must include hostname UTMs, got ${location}`,
+          `${pathname} Location must stamp MEGAPOT_UTM_* (not the template repo name), got ${location}`,
         );
       }
     }
@@ -158,7 +175,7 @@ async function main(): Promise<void> {
   await assertRoutesJson();
   await assertLiveRedirects();
   console.log(
-    `/go check passed: Function 302 + UTMs for ${GO_FUNCTION_PATHS.join(" and ")}; no static 200.`,
+    `/go check passed: Function 302 + env UTMs for ${GO_FUNCTION_PATHS.join(" and ")}; no static 200.`,
   );
 }
 

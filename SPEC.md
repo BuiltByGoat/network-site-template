@@ -45,14 +45,20 @@ Those kits were slapped together. This repo is the clean replacement: cribble-fi
 | --- | --- | --- |
 | `NEXT_PUBLIC_SITE_NAME` | yes | Site label |
 | `MEGAPOT_PLAY_DESTINATION` | no | Absolute play URL for `/go` |
+| `MEGAPOT_UTM_SOURCE` | no | Hostname-style `utm_source` (prefer this so clones stamp the deploy host) |
+| `MEGAPOT_UTM_MEDIUM` | no | `utm_medium` override (default `template`) |
+| `MEGAPOT_UTM_CAMPAIGN` | no | `utm_campaign` override (default `network-v1`) |
+| `MEGAPOT_SITE_HOSTNAME` | no | Deploy host; derives `utm_source` when `MEGAPOT_UTM_SOURCE` is unset |
 | `MEGAPOT_REFERRER_ADDRESS` | no | Reserved; unused in marketing shell |
 | `MEGAPOT_API_KEY` | no | Reserved; never `NEXT_PUBLIC_` |
 
-## Default UTMs (v1)
+## UTMs (v1)
 
-- `utm_source=network-site-template` (factory may override later to hostname)
-- `utm_medium=template`
-- `utm_campaign=network-v1`
+Do not hardcode `utm_source=network-site-template` as the only value. Resolve from private env:
+
+- `utm_source` ← `MEGAPOT_UTM_SOURCE`, else hostname from `MEGAPOT_SITE_HOSTNAME`, else `network-site-template`
+- `utm_medium` ← `MEGAPOT_UTM_MEDIUM`, else `template`
+- `utm_campaign` ← `MEGAPOT_UTM_CAMPAIGN`, else `network-v1`
 
 ## Done when
 

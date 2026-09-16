@@ -16,7 +16,7 @@ describe("scanText", () => {
   it("allows cribble hex colors and env names without values", () => {
     const findings = scanText(
       "out/index.html",
-      "color:#02fe01 MEGAPOT_API_KEY MEGAPOT_REFERRER_ADDRESS",
+      "color:#02fe01 MEGAPOT_API_KEY MEGAPOT_REFERRER_ADDRESS MEGAPOT_UTM_SOURCE MEGAPOT_SITE_HOSTNAME",
     );
 
     expect(findings).toEqual([]);

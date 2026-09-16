@@ -1,5 +1,5 @@
 import { PUBLIC_MEGAPOT_ORIGIN } from "./origin";
-import { withUtms } from "./utms";
+import { resolveUtms, withUtms } from "./utms";
 
 export const PLAY_HREF = "/go";
 
@@ -9,7 +9,10 @@ export const PUBLIC_PATHS = {
 } as const;
 
 export function publicMegapotUrl(path: string): string {
-  return withUtms(new URL(path, PUBLIC_MEGAPOT_ORIGIN).toString());
+  return withUtms(
+    new URL(path, PUBLIC_MEGAPOT_ORIGIN).toString(),
+    resolveUtms(),
+  );
 }
 
 export function dashboardUrl(): string {

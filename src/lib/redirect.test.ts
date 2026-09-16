@@ -50,4 +50,32 @@ describe("buildPlayRedirect", () => {
     expect(parsed.searchParams.has("ref")).toBe(false);
     expect(parsed.searchParams.has("referral")).toBe(false);
   });
+
+  it("stamps deploy-host UTMs from private env instead of the template name", () => {
+    const parsed = new URL(
+      buildPlayRedirect("https://megapot.io/play", {
+        MEGAPOT_UTM_SOURCE: "deploy-host.example",
+        MEGAPOT_UTM_MEDIUM: "clone",
+        MEGAPOT_UTM_CAMPAIGN: "network-clone",
+      }),
+    );
+
+    expect(parsed.searchParams.get("utm_source")).toBe("deploy-host.example");
+    expect(parsed.searchParams.get("utm_medium")).toBe("clone");
+    expect(parsed.searchParams.get("utm_campaign")).toBe("network-clone");
+  });
+
+  it("derives utm_source from MEGAPOT_SITE_HOSTNAME when source is unset", () => {
+    const parsed = new URL(
+      buildPlayRedirect(undefined, {
+        MEGAPOT_SITE_HOSTNAME: "https://www.clone-host.example",
+      }),
+    );
+
+    expect(parsed.searchParams.get("utm_source")).toBe("clone-host.example");
+    expect(parsed.searchParams.get("utm_medium")).toBe(DEFAULT_UTMS.utm_medium);
+    expect(parsed.searchParams.get("utm_campaign")).toBe(
+      DEFAULT_UTMS.utm_campaign,
+    );
+  });
 });

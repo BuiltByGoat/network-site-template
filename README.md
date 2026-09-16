@@ -50,8 +50,9 @@ Smoke after deploy (or `pnpm preview`):
 ```bash
 curl -sI https://YOUR_DOMAIN/go
 curl -sI https://YOUR_DOMAIN/go/
-# Both must be HTTP 302 with Location containing
-# utm_source=network-site-template&utm_medium=template&utm_campaign=network-v1
+# Both must be HTTP 302 with Location containing hostname-style UTMs
+# from MEGAPOT_UTM_SOURCE (or MEGAPOT_SITE_HOSTNAME), plus
+# MEGAPOT_UTM_MEDIUM / MEGAPOT_UTM_CAMPAIGN (or their defaults).
 ```
 
 ## Env
@@ -60,20 +61,24 @@ curl -sI https://YOUR_DOMAIN/go/
 | --- | --- | --- |
 | `NEXT_PUBLIC_SITE_NAME` | yes | Site label |
 | `MEGAPOT_PLAY_DESTINATION` | no | Absolute play URL for `/go` |
+| `MEGAPOT_UTM_SOURCE` | no | Hostname-style `utm_source` (prefer this; clones stamp the deploy host) |
+| `MEGAPOT_UTM_MEDIUM` | no | `utm_medium` override |
+| `MEGAPOT_UTM_CAMPAIGN` | no | `utm_campaign` override |
+| `MEGAPOT_SITE_HOSTNAME` | no | Deploy host; derives `utm_source` when `MEGAPOT_UTM_SOURCE` is unset |
 | `MEGAPOT_REFERRER_ADDRESS` | no | Reserved; unused in v1 |
 | `MEGAPOT_API_KEY` | no | Reserved; never `NEXT_PUBLIC_` |
 
 Documented names only. Do not put real values in git.
 
-## Default UTMs (v1)
+## UTMs (v1)
 
-Outbound Megapot links (dashboard, results, and the `/go` hop) stamp:
+`/go` and outbound Megapot links (dashboard, results) resolve campaign params from private env — not the template repo name:
 
-- `utm_source=network-site-template`
-- `utm_medium=template`
-- `utm_campaign=network-v1`
+1. `utm_source` from `MEGAPOT_UTM_SOURCE`, else hostname derived from `MEGAPOT_SITE_HOSTNAME` (scheme/`www.` stripped), else `network-site-template`
+2. `utm_medium` from `MEGAPOT_UTM_MEDIUM`, else `template`
+3. `utm_campaign` from `MEGAPOT_UTM_CAMPAIGN`, else `network-v1`
 
-Play CTAs are local `/go`. Dashboard and results point at the public Megapot origin with those UTMs already in the href.
+Set `MEGAPOT_UTM_SOURCE` (or `MEGAPOT_SITE_HOSTNAME`) on each clone so Location stamps the deploy host. Play CTAs stay local `/go`. Dashboard and results get the same resolved UTMs at build time. No referral codes or wallets in public markup.
 
 ## Scripts
 
@@ -83,7 +88,7 @@ Play CTAs are local `/go`. Dashboard and results point at the public Megapot ori
 | `pnpm typecheck` | `tsc --noEmit` |
 | `pnpm test` | Redirect + UTM + privacy unit tests |
 | `pnpm privacy` | Scan generated `out/` |
-| `pnpm utms` | Assert Play/dashboard/results + `/go` stamp agreed UTMs |
+| `pnpm utms` | Assert Play/dashboard/results + `/go` resolve UTMs from env |
 | `pnpm go` | Fail if `/go` would be a static 200; live-check Function 302 + UTMs |
 | `pnpm check` | All of the above, including a build |
 

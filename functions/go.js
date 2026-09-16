@@ -6,6 +6,8 @@ const DEFAULT_UTMS = {
   utm_campaign: "network-v1",
 };
 
+const TOKEN = /^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/;
+
 function isSafeHttpUrl(value) {
   try {
     const parsed = new URL(value);
@@ -13,6 +15,52 @@ function isSafeHttpUrl(value) {
   } catch {
     return false;
   }
+}
+
+function readToken(value) {
+  const trimmed = typeof value === "string" ? value.trim().toLowerCase() : "";
+  if (!trimmed || !TOKEN.test(trimmed)) {
+    return undefined;
+  }
+  if (trimmed.startsWith("0x") || trimmed.includes("invite")) {
+    return undefined;
+  }
+  return trimmed;
+}
+
+function hostnameToUtmSource(raw) {
+  const trimmed = typeof raw === "string" ? raw.trim() : "";
+  if (!trimmed) {
+    return undefined;
+  }
+
+  try {
+    const url = trimmed.includes("://")
+      ? new URL(trimmed)
+      : new URL(`https://${trimmed}`);
+    let host = url.hostname.toLowerCase();
+    if (host.startsWith("www.")) {
+      host = host.slice(4);
+    }
+    return readToken(host);
+  } catch {
+    return readToken(trimmed);
+  }
+}
+
+function resolveUtms(env) {
+  const bag = env && typeof env === "object" ? env : {};
+  const source =
+    readToken(bag.MEGAPOT_UTM_SOURCE) ??
+    hostnameToUtmSource(bag.MEGAPOT_SITE_HOSTNAME) ??
+    DEFAULT_UTMS.utm_source;
+
+  return {
+    utm_source: source,
+    utm_medium: readToken(bag.MEGAPOT_UTM_MEDIUM) ?? DEFAULT_UTMS.utm_medium,
+    utm_campaign:
+      readToken(bag.MEGAPOT_UTM_CAMPAIGN) ?? DEFAULT_UTMS.utm_campaign,
+  };
 }
 
 function resolvePlayDestination(envValue) {
@@ -23,9 +71,9 @@ function resolvePlayDestination(envValue) {
   return trimmed;
 }
 
-function withUtms(url) {
+function withUtms(url, utms) {
   const parsed = new URL(url);
-  for (const [key, value] of Object.entries(DEFAULT_UTMS)) {
+  for (const [key, value] of Object.entries(utms)) {
     if (!parsed.searchParams.has(key)) {
       parsed.searchParams.set(key, value);
     }
@@ -34,8 +82,10 @@ function withUtms(url) {
 }
 
 function handleGo(context) {
+  const env = context.env ?? {};
   const location = withUtms(
-    resolvePlayDestination(context.env.MEGAPOT_PLAY_DESTINATION),
+    resolvePlayDestination(env.MEGAPOT_PLAY_DESTINATION),
+    resolveUtms(env),
   );
   return Response.redirect(location, 302);
 }

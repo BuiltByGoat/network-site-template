@@ -1,7 +1,7 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { PLAY_HREF } from "../src/lib/links";
-import { DEFAULT_UTMS } from "../src/lib/utms";
+import { locationHasCampaignUtms, resolveUtms } from "../src/lib/utms";
 
 const ROOT = path.resolve(process.cwd(), process.argv[2] ?? "out");
 const GO_SOURCES = [
@@ -10,6 +10,13 @@ const GO_SOURCES = [
 ];
 
 const REQUIRED_CTAS = ["play", "dashboard", "results"] as const;
+const REQUIRED_GO_ENV = [
+  "MEGAPOT_PLAY_DESTINATION",
+  "MEGAPOT_UTM_SOURCE",
+  "MEGAPOT_SITE_HOSTNAME",
+  "MEGAPOT_UTM_MEDIUM",
+  "MEGAPOT_UTM_CAMPAIGN",
+] as const;
 
 function hrefsOf(html: string, cta: string): string[] {
   const tags = html.matchAll(
@@ -25,13 +32,15 @@ function decodeHref(href: string): string {
   return href.replaceAll("&amp;", "&");
 }
 
-function hasDefaultUtms(url: string): boolean {
+function hasResolvedUtms(url: string): boolean {
   try {
     const parsed = new URL(decodeHref(url));
+    const expected = resolveUtms();
     return (
-      parsed.searchParams.get("utm_source") === DEFAULT_UTMS.utm_source &&
-      parsed.searchParams.get("utm_medium") === DEFAULT_UTMS.utm_medium &&
-      parsed.searchParams.get("utm_campaign") === DEFAULT_UTMS.utm_campaign
+      locationHasCampaignUtms(parsed.toString()) &&
+      parsed.searchParams.get("utm_source") === expected.utm_source &&
+      parsed.searchParams.get("utm_medium") === expected.utm_medium &&
+      parsed.searchParams.get("utm_campaign") === expected.utm_campaign
     );
   } catch {
     return false;
@@ -63,6 +72,7 @@ async function main(): Promise<void> {
   const pages = await collectHtml(ROOT);
   const html = pages.join("\n");
   const errors: string[] = [];
+  const expected = resolveUtms();
 
   for (const cta of REQUIRED_CTAS) {
     const hrefs = hrefsOf(html, cta);
@@ -79,31 +89,42 @@ async function main(): Promise<void> {
         continue;
       }
 
-      if (!hasDefaultUtms(href)) {
+      if (!hasResolvedUtms(href)) {
         errors.push(
-          `${cta} link must stamp ${DEFAULT_UTMS.utm_source} / ${DEFAULT_UTMS.utm_medium} / ${DEFAULT_UTMS.utm_campaign}: ${href}`,
+          `${cta} link must stamp resolved UTMs (${expected.utm_source} / ${expected.utm_medium} / ${expected.utm_campaign}): ${href}`,
         );
       }
     }
   }
 
-  const goSource = (
-    await Promise.all(GO_SOURCES.map((file) => readFile(file, "utf8")))
-  ).join("\n");
+  const goSources = await Promise.all(
+    GO_SOURCES.map((file) => readFile(file, "utf8")),
+  );
+  const goSource = goSources.join("\n");
+  if (goSources[0] !== goSources[1]) {
+    errors.push("functions/go.js and functions/go/index.js must be identical");
+  }
   if (!goSource.includes("export function onRequest")) {
     errors.push("functions/go.js must export onRequest");
   }
   if (!goSource.includes("export function onRequestGet")) {
     errors.push("functions/go.js must export onRequestGet");
   }
-  if (!goSource.includes("MEGAPOT_PLAY_DESTINATION")) {
-    errors.push("/go must read MEGAPOT_PLAY_DESTINATION");
-  }
   if (!goSource.includes("302")) {
     errors.push("/go must 302");
   }
-  if (!goSource.includes(DEFAULT_UTMS.utm_source)) {
-    errors.push("/go must stamp hostname utm_source");
+  for (const name of REQUIRED_GO_ENV) {
+    if (!goSource.includes(name)) {
+      errors.push(
+        `/go must read ${name} (do not hardcode UTMs as the only value)`,
+      );
+    }
+  }
+  if (!goSource.includes("hostnameToUtmSource")) {
+    errors.push("/go must derive utm_source from MEGAPOT_SITE_HOSTNAME");
+  }
+  if (!goSource.includes("resolveUtms")) {
+    errors.push("/go must resolve UTMs from private env, not only defaults");
   }
 
   if (errors.length > 0) {

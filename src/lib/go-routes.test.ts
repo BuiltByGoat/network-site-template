@@ -46,6 +46,12 @@ describe("Pages Function files", () => {
     expect(goSource).toContain("export function onRequestGet");
     expect(goSource).toContain("302");
     expect(goSource).toContain("MEGAPOT_PLAY_DESTINATION");
+    expect(goSource).toContain("MEGAPOT_UTM_SOURCE");
+    expect(goSource).toContain("MEGAPOT_SITE_HOSTNAME");
+    expect(goSource).toContain("MEGAPOT_UTM_MEDIUM");
+    expect(goSource).toContain("MEGAPOT_UTM_CAMPAIGN");
+    expect(goSource).toContain("hostnameToUtmSource");
+    expect(goSource).toContain("resolveUtms");
     expect(goSource).toContain(DEFAULT_UTMS.utm_source);
     expect(goSource).toContain(DEFAULT_UTMS.utm_medium);
     expect(goSource).toContain(DEFAULT_UTMS.utm_campaign);

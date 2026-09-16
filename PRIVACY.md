@@ -16,6 +16,10 @@ Public pages and generated `out/` must stay free of attribution secrets.
 | --- | --- | --- |
 | `NEXT_PUBLIC_SITE_NAME` | yes | Site label only |
 | `MEGAPOT_PLAY_DESTINATION` | no | Absolute play URL for `/go` |
+| `MEGAPOT_UTM_SOURCE` | no | Hostname-style `utm_source`; campaign param, not a secret |
+| `MEGAPOT_UTM_MEDIUM` | no | `utm_medium` override |
+| `MEGAPOT_UTM_CAMPAIGN` | no | `utm_campaign` override |
+| `MEGAPOT_SITE_HOSTNAME` | no | Deploy host used to derive `utm_source` |
 | `MEGAPOT_REFERRER_ADDRESS` | no | Reserved; unused in v1 |
 | `MEGAPOT_API_KEY` | no | Reserved; never `NEXT_PUBLIC_` |
 
@@ -23,4 +27,4 @@ Public pages and generated `out/` must stay free of attribution secrets.
 
 ## Checks
 
-`pnpm privacy` scans generated `out/` for wallet-like hex, invite paths, and known secret patterns. `pnpm utms` confirms Play goes through `/go` and that dashboard/results stamp the default UTMs. `pnpm go` fails if `/go` would be a static 200, requires `functions/go.js` + `functions/go/index.js`, and live-checks both paths HTTP 302 with hostname UTMs (`curl -sI`).
+`pnpm privacy` scans generated `out/` for wallet-like hex, invite paths, and known secret patterns. `pnpm utms` confirms Play goes through `/go` and that dashboard/results stamp resolved campaign UTMs. `pnpm go` fails if `/go` would be a static 200, requires `functions/go.js` + `functions/go/index.js`, and live-checks both paths HTTP 302 with `MEGAPOT_UTM_*` (not the template repo name) (`curl -sI`).
