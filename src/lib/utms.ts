@@ -17,6 +17,8 @@ export type UtmEnv = {
   MEGAPOT_SITE_HOSTNAME?: string;
 };
 
+type EnvBag = UtmEnv | NodeJS.ProcessEnv;
+
 const TOKEN = /^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/;
 
 function readToken(value: string | undefined): string | undefined {
@@ -52,7 +54,7 @@ export function hostnameToUtmSource(
   }
 }
 
-export function resolveUtms(env: UtmEnv = process.env): UtmParams {
+export function resolveUtms(env: EnvBag = process.env): UtmParams {
   const source =
     readToken(env.MEGAPOT_UTM_SOURCE) ??
     hostnameToUtmSource(env.MEGAPOT_SITE_HOSTNAME) ??
