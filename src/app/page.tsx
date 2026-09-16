@@ -1,4 +1,4 @@
-import { dashboardUrl, PLAY_HREF, resultsUrl } from "@/lib/links";
+import { dashboardUrl, hubUrl, PLAY_HREF, resultsUrl } from "@/lib/links";
 import { siteName } from "@/lib/site";
 
 function Mark() {
@@ -20,6 +20,7 @@ export default function HomePage() {
   const name = siteName();
   const dashboard = dashboardUrl();
   const results = resultsUrl();
+  const hub = hubUrl();
 
   return (
     <div className="shell">
@@ -30,10 +31,10 @@ export default function HomePage() {
             {name}
           </div>
           <nav className="nav" aria-label="Primary">
-            <a href={results} data-cta="results">
+            <a href={results} data-cta="results" rel="noreferrer">
               Results
             </a>
-            <a href={dashboard} data-cta="dashboard">
+            <a href={dashboard} data-cta="dashboard" rel="noreferrer">
               Dashboard
             </a>
             <a className="play" href={PLAY_HREF} data-cta="play">
@@ -55,10 +56,20 @@ export default function HomePage() {
               <a className="play" href={PLAY_HREF} data-cta="play">
                 Play the jackpot
               </a>
-              <a className="ghost" href={dashboard} data-cta="dashboard">
+              <a
+                className="ghost"
+                href={dashboard}
+                data-cta="dashboard"
+                rel="noreferrer"
+              >
                 Open dashboard
               </a>
-              <a className="ghost" href={results} data-cta="results">
+              <a
+                className="ghost"
+                href={results}
+                data-cta="results"
+                rel="noreferrer"
+              >
                 Latest results
               </a>
             </div>
@@ -86,8 +97,8 @@ export default function HomePage() {
             <span>02 / Books</span>
             <h2>Live look-up</h2>
             <p>
-              Dashboard and drawing results stay one click away on the public
-              Megapot origin — campaign params, not secrets.
+              Dashboard stays on the public Megapot origin. Latest results go to
+              megapotresults.com — campaign params, not secrets.
             </p>
           </article>
           <article className="prop">
@@ -105,7 +116,11 @@ export default function HomePage() {
             {name} · privacy-clean footer · no referral codes, wallet addresses,
             or invite paths
           </p>
-          <p>Attribution stays on the host.</p>
+          <p>
+            <a href={hub} data-cta="hub" rel="noreferrer">
+              Megapot Network
+            </a>
+          </p>
         </footer>
       </div>
     </div>

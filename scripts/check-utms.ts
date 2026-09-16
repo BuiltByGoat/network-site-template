@@ -1,6 +1,12 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { PLAY_HREF } from "../src/lib/links";
+import {
+  NETWORK_HUB_ORIGIN,
+  PUBLIC_MEGAPOT_ORIGIN,
+  RESULTS_ORIGIN,
+} from "../src/lib/origin";
+import { documentTitle, siteName } from "../src/lib/site";
 import { locationHasCampaignUtms, resolveUtms } from "../src/lib/utms";
 
 const ROOT = path.resolve(process.cwd(), process.argv[2] ?? "out");
@@ -9,11 +15,12 @@ const GO_SOURCES = [
   path.resolve(process.cwd(), "functions/go/index.js"),
 ];
 
-const REQUIRED_CTAS = ["play", "dashboard", "results"] as const;
+const REQUIRED_CTAS = ["play", "dashboard", "results", "hub"] as const;
 const REQUIRED_GO_ENV = [
   "MEGAPOT_PLAY_DESTINATION",
-  "MEGAPOT_UTM_SOURCE",
+  "SITE_HOSTNAME",
   "MEGAPOT_SITE_HOSTNAME",
+  "MEGAPOT_UTM_SOURCE",
   "MEGAPOT_UTM_MEDIUM",
   "MEGAPOT_UTM_CAMPAIGN",
 ] as const;
@@ -32,15 +39,29 @@ function decodeHref(href: string): string {
   return href.replaceAll("&amp;", "&");
 }
 
+function hostOf(url: string): string | undefined {
+  try {
+    return new URL(decodeHref(url)).hostname.replace(/^www\./, "");
+  } catch {
+    return undefined;
+  }
+}
+
 function hasResolvedUtms(url: string): boolean {
   try {
     const parsed = new URL(decodeHref(url));
     const expected = resolveUtms();
+    const source = parsed.searchParams.get("utm_source");
+    if (source === "network-site-template") {
+      return false;
+    }
+    if (expected.utm_source && !locationHasCampaignUtms(parsed.toString())) {
+      return false;
+    }
     return (
-      locationHasCampaignUtms(parsed.toString()) &&
-      parsed.searchParams.get("utm_source") === expected.utm_source &&
       parsed.searchParams.get("utm_medium") === expected.utm_medium &&
-      parsed.searchParams.get("utm_campaign") === expected.utm_campaign
+      parsed.searchParams.get("utm_campaign") === expected.utm_campaign &&
+      (!expected.utm_source || source === expected.utm_source)
     );
   } catch {
     return false;
@@ -72,7 +93,17 @@ async function main(): Promise<void> {
   const pages = await collectHtml(ROOT);
   const html = pages.join("\n");
   const errors: string[] = [];
-  const expected = resolveUtms();
+  const title = documentTitle(siteName());
+
+  if (!html.includes(`<title>${title}</title>`)) {
+    errors.push(`Document title must be ${title}`);
+  }
+
+  if (html.includes("drawingresults")) {
+    errors.push(
+      "Latest results must use megapotresults.com, not drawingresults as primary",
+    );
+  }
 
   for (const cta of REQUIRED_CTAS) {
     const hrefs = hrefsOf(html, cta);
@@ -89,9 +120,27 @@ async function main(): Promise<void> {
         continue;
       }
 
+      const host = hostOf(href);
+      if (cta === "results" && host !== new URL(RESULTS_ORIGIN).hostname) {
+        errors.push(`results CTA must go to ${RESULTS_ORIGIN}, found ${href}`);
+      }
+      if (cta === "hub" && host !== new URL(NETWORK_HUB_ORIGIN).hostname) {
+        errors.push(
+          `hub footer must go to ${NETWORK_HUB_ORIGIN}, found ${href}`,
+        );
+      }
+      if (
+        cta === "dashboard" &&
+        host !== new URL(PUBLIC_MEGAPOT_ORIGIN).hostname
+      ) {
+        errors.push(
+          `dashboard CTA must stay on ${PUBLIC_MEGAPOT_ORIGIN}, found ${href}`,
+        );
+      }
+
       if (!hasResolvedUtms(href)) {
         errors.push(
-          `${cta} link must stamp resolved UTMs (${expected.utm_source} / ${expected.utm_medium} / ${expected.utm_campaign}): ${href}`,
+          `${cta} link must stamp resolved UTMs (SITE_HOSTNAME source, not the template repo name): ${href}`,
         );
       }
     }
@@ -116,15 +165,20 @@ async function main(): Promise<void> {
   for (const name of REQUIRED_GO_ENV) {
     if (!goSource.includes(name)) {
       errors.push(
-        `/go must read ${name} (do not hardcode UTMs as the only value)`,
+        `/go must read ${name} (utm_source from SITE_HOSTNAME, not the template repo name)`,
       );
     }
   }
   if (!goSource.includes("hostnameToUtmSource")) {
-    errors.push("/go must derive utm_source from MEGAPOT_SITE_HOSTNAME");
+    errors.push("/go must derive utm_source from SITE_HOSTNAME");
   }
   if (!goSource.includes("resolveUtms")) {
     errors.push("/go must resolve UTMs from private env, not only defaults");
+  }
+  if (/utm_source:\s*"network-site-template"/.test(goSource)) {
+    errors.push(
+      "/go must not hardcode utm_source as the literal network-site-template",
+    );
   }
 
   if (errors.length > 0) {

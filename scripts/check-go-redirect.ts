@@ -12,13 +12,13 @@ import {
 } from "../src/lib/go-routes";
 
 const LIVE_UTMS = {
-  MEGAPOT_UTM_SOURCE: "clone-host.example",
+  SITE_HOSTNAME: "https://www.clone-host.example",
   MEGAPOT_UTM_MEDIUM: "clone",
   MEGAPOT_UTM_CAMPAIGN: "network-clone",
 } as const;
 
 const LIVE_UTM_PARAMS = {
-  utm_source: LIVE_UTMS.MEGAPOT_UTM_SOURCE,
+  utm_source: "clone-host.example",
   utm_medium: LIVE_UTMS.MEGAPOT_UTM_MEDIUM,
   utm_campaign: LIVE_UTMS.MEGAPOT_UTM_CAMPAIGN,
 } as const;
@@ -112,7 +112,7 @@ async function assertLiveRedirects(): Promise<void> {
       "--ip",
       "127.0.0.1",
       "--binding",
-      `MEGAPOT_UTM_SOURCE=${LIVE_UTMS.MEGAPOT_UTM_SOURCE}`,
+      `SITE_HOSTNAME=${LIVE_UTMS.SITE_HOSTNAME}`,
       "--binding",
       `MEGAPOT_UTM_MEDIUM=${LIVE_UTMS.MEGAPOT_UTM_MEDIUM}`,
       "--binding",
@@ -146,7 +146,7 @@ async function assertLiveRedirects(): Promise<void> {
       const location = response.headers.get("location");
       if (!location || !locationHasDefaultUtms(location, LIVE_UTM_PARAMS)) {
         throw new Error(
-          `${pathname} Location must stamp MEGAPOT_UTM_* (not the template repo name), got ${location}`,
+          `${pathname} Location must stamp SITE_HOSTNAME as utm_source (not the template repo name), got ${location}`,
         );
       }
     }

@@ -1,32 +1,38 @@
 export const DEFAULT_UTMS = {
-  utm_source: "network-site-template",
   utm_medium: "template",
   utm_campaign: "network-v1",
 } as const;
 
 export type UtmParams = {
-  utm_source: string;
+  utm_source?: string;
   utm_medium: string;
   utm_campaign: string;
 };
 
 export type UtmEnv = {
+  SITE_HOSTNAME?: string;
+  MEGAPOT_SITE_HOSTNAME?: string;
   MEGAPOT_UTM_SOURCE?: string;
   MEGAPOT_UTM_MEDIUM?: string;
   MEGAPOT_UTM_CAMPAIGN?: string;
-  MEGAPOT_SITE_HOSTNAME?: string;
+  CF_PAGES_URL?: string;
 };
 
 type EnvBag = UtmEnv | NodeJS.ProcessEnv;
 
 const TOKEN = /^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/;
+const TEMPLATE_REPO_SOURCE = "network-site-template";
 
 function readToken(value: string | undefined): string | undefined {
   const trimmed = value?.trim().toLowerCase();
   if (!trimmed || !TOKEN.test(trimmed)) {
     return undefined;
   }
-  if (trimmed.startsWith("0x") || trimmed.includes("invite")) {
+  if (
+    trimmed === TEMPLATE_REPO_SOURCE ||
+    trimmed.startsWith("0x") ||
+    trimmed.includes("invite")
+  ) {
     return undefined;
   }
   return trimmed;
@@ -56,12 +62,13 @@ export function hostnameToUtmSource(
 
 export function resolveUtms(env: EnvBag = process.env): UtmParams {
   const source =
-    readToken(env.MEGAPOT_UTM_SOURCE) ??
+    hostnameToUtmSource(env.SITE_HOSTNAME) ??
     hostnameToUtmSource(env.MEGAPOT_SITE_HOSTNAME) ??
-    DEFAULT_UTMS.utm_source;
+    readToken(env.MEGAPOT_UTM_SOURCE) ??
+    hostnameToUtmSource(env.CF_PAGES_URL);
 
   return {
-    utm_source: source,
+    ...(source ? { utm_source: source } : {}),
     utm_medium: readToken(env.MEGAPOT_UTM_MEDIUM) ?? DEFAULT_UTMS.utm_medium,
     utm_campaign:
       readToken(env.MEGAPOT_UTM_CAMPAIGN) ?? DEFAULT_UTMS.utm_campaign,
@@ -72,7 +79,7 @@ export function withUtms(url: string, utms: UtmParams = resolveUtms()): string {
   const parsed = new URL(url);
 
   for (const [key, value] of Object.entries(utms)) {
-    if (!parsed.searchParams.has(key)) {
+    if (value && !parsed.searchParams.has(key)) {
       parsed.searchParams.set(key, value);
     }
   }
@@ -91,6 +98,7 @@ export function locationHasCampaignUtms(location: string): boolean {
       Boolean(readToken(source ?? undefined)) &&
       Boolean(readToken(medium ?? undefined)) &&
       Boolean(readToken(campaign ?? undefined)) &&
+      source !== TEMPLATE_REPO_SOURCE &&
       !parsed.searchParams.has("ref") &&
       !parsed.searchParams.has("referral")
     );

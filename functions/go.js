@@ -1,12 +1,12 @@
 const PUBLIC_MEGAPOT_ORIGIN = "https://megapot.io";
 
 const DEFAULT_UTMS = {
-  utm_source: "network-site-template",
   utm_medium: "template",
   utm_campaign: "network-v1",
 };
 
 const TOKEN = /^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/;
+const TEMPLATE_REPO_SOURCE = "network-site-template";
 
 function isSafeHttpUrl(value) {
   try {
@@ -22,7 +22,11 @@ function readToken(value) {
   if (!trimmed || !TOKEN.test(trimmed)) {
     return undefined;
   }
-  if (trimmed.startsWith("0x") || trimmed.includes("invite")) {
+  if (
+    trimmed === TEMPLATE_REPO_SOURCE ||
+    trimmed.startsWith("0x") ||
+    trimmed.includes("invite")
+  ) {
     return undefined;
   }
   return trimmed;
@@ -51,12 +55,13 @@ function hostnameToUtmSource(raw) {
 function resolveUtms(env) {
   const bag = env && typeof env === "object" ? env : {};
   const source =
-    readToken(bag.MEGAPOT_UTM_SOURCE) ??
+    hostnameToUtmSource(bag.SITE_HOSTNAME) ??
     hostnameToUtmSource(bag.MEGAPOT_SITE_HOSTNAME) ??
-    DEFAULT_UTMS.utm_source;
+    readToken(bag.MEGAPOT_UTM_SOURCE) ??
+    hostnameToUtmSource(bag.CF_PAGES_URL);
 
   return {
-    utm_source: source,
+    ...(source ? { utm_source: source } : {}),
     utm_medium: readToken(bag.MEGAPOT_UTM_MEDIUM) ?? DEFAULT_UTMS.utm_medium,
     utm_campaign:
       readToken(bag.MEGAPOT_UTM_CAMPAIGN) ?? DEFAULT_UTMS.utm_campaign,
@@ -74,7 +79,7 @@ function resolvePlayDestination(envValue) {
 function withUtms(url, utms) {
   const parsed = new URL(url);
   for (const [key, value] of Object.entries(utms)) {
-    if (!parsed.searchParams.has(key)) {
+    if (value && !parsed.searchParams.has(key)) {
       parsed.searchParams.set(key, value);
     }
   }

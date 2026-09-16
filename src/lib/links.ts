@@ -1,11 +1,14 @@
-import { PUBLIC_MEGAPOT_ORIGIN } from "./origin";
+import {
+  NETWORK_HUB_ORIGIN,
+  PUBLIC_MEGAPOT_ORIGIN,
+  RESULTS_ORIGIN,
+} from "./origin";
 import { resolveUtms, withUtms } from "./utms";
 
 export const PLAY_HREF = "/go";
 
 export const PUBLIC_PATHS = {
   dashboard: "/dashboard",
-  results: "/results",
 } as const;
 
 export function publicMegapotUrl(path: string): string {
@@ -20,5 +23,9 @@ export function dashboardUrl(): string {
 }
 
 export function resultsUrl(): string {
-  return publicMegapotUrl(PUBLIC_PATHS.results);
+  return withUtms(RESULTS_ORIGIN, resolveUtms());
+}
+
+export function hubUrl(): string {
+  return withUtms(NETWORK_HUB_ORIGIN, resolveUtms());
 }

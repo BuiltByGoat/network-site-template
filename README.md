@@ -51,7 +51,7 @@ Smoke after deploy (or `pnpm preview`):
 curl -sI https://YOUR_DOMAIN/go
 curl -sI https://YOUR_DOMAIN/go/
 # Both must be HTTP 302 with Location containing hostname-style UTMs
-# from MEGAPOT_UTM_SOURCE (or MEGAPOT_SITE_HOSTNAME), plus
+# from SITE_HOSTNAME (not the literal network-site-template), plus
 # MEGAPOT_UTM_MEDIUM / MEGAPOT_UTM_CAMPAIGN (or their defaults).
 ```
 
@@ -59,12 +59,13 @@ curl -sI https://YOUR_DOMAIN/go/
 
 | Name | Public? | Role |
 | --- | --- | --- |
-| `NEXT_PUBLIC_SITE_NAME` | yes | Site label |
+| `NEXT_PUBLIC_SITE_NAME` | yes | Site label; document title is `Play on Megapot \| {SITE_NAME}` |
+| `SITE_HOSTNAME` | no | Deploy host; `utm_source` is this hostname (scheme/`www.` stripped) |
+| `MEGAPOT_SITE_HOSTNAME` | no | Alias of `SITE_HOSTNAME` |
+| `MEGAPOT_UTM_SOURCE` | no | Optional explicit `utm_source` if hostname envs are unset |
+| `MEGAPOT_UTM_MEDIUM` | no | `utm_medium` override (default `template`) |
+| `MEGAPOT_UTM_CAMPAIGN` | no | `utm_campaign` override (default `network-v1`) |
 | `MEGAPOT_PLAY_DESTINATION` | no | Absolute play URL for `/go` |
-| `MEGAPOT_UTM_SOURCE` | no | Hostname-style `utm_source` (prefer this; clones stamp the deploy host) |
-| `MEGAPOT_UTM_MEDIUM` | no | `utm_medium` override |
-| `MEGAPOT_UTM_CAMPAIGN` | no | `utm_campaign` override |
-| `MEGAPOT_SITE_HOSTNAME` | no | Deploy host; derives `utm_source` when `MEGAPOT_UTM_SOURCE` is unset |
 | `MEGAPOT_REFERRER_ADDRESS` | no | Reserved; unused in v1 |
 | `MEGAPOT_API_KEY` | no | Reserved; never `NEXT_PUBLIC_` |
 
@@ -72,13 +73,13 @@ Documented names only. Do not put real values in git.
 
 ## UTMs (v1)
 
-`/go` and outbound Megapot links (dashboard, results) resolve campaign params from private env — not the template repo name:
+`/go` and outbound links resolve campaign params from private env — not the literal `network-site-template`:
 
-1. `utm_source` from `MEGAPOT_UTM_SOURCE`, else hostname derived from `MEGAPOT_SITE_HOSTNAME` (scheme/`www.` stripped), else `network-site-template`
+1. `utm_source` from `SITE_HOSTNAME` (hostname-style), else `MEGAPOT_SITE_HOSTNAME`, else `MEGAPOT_UTM_SOURCE`, else Pages `CF_PAGES_URL`. Never the template repo name.
 2. `utm_medium` from `MEGAPOT_UTM_MEDIUM`, else `template`
 3. `utm_campaign` from `MEGAPOT_UTM_CAMPAIGN`, else `network-v1`
 
-Set `MEGAPOT_UTM_SOURCE` (or `MEGAPOT_SITE_HOSTNAME`) on each clone so Location stamps the deploy host. Play CTAs stay local `/go`. Dashboard and results get the same resolved UTMs at build time. No referral codes or wallets in public markup.
+Set `SITE_HOSTNAME` on each clone so Location stamps the deploy host. Play CTAs stay local `/go`. Dashboard stays on megapot.io. Latest results go to **megapotresults.com** (cohort SoT). Footer hub goes to **megapot.network**. All of those outbound links get the same resolved UTMs. No referral codes or wallets in public markup.
 
 ## Scripts
 

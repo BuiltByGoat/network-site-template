@@ -282,6 +282,15 @@ h1 {
   max-width: 62ch;
 }
 
+.foot a {
+  color: var(--ice);
+}
+
+.foot a:hover,
+.foot a:focus-visible {
+  color: var(--green);
+}
+
 @media (max-width: 860px) {
   .top,
   .hero,

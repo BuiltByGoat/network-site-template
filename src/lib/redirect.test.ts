@@ -26,12 +26,12 @@ describe("resolvePlayDestination", () => {
 });
 
 describe("buildPlayRedirect", () => {
-  it("stamps default UTMs on the public origin when env is empty", () => {
+  it("stamps medium/campaign defaults without the template repo name", () => {
     const parsed = new URL(buildPlayRedirect(undefined));
 
     expect(parsed.origin).toBe(PUBLIC_MEGAPOT_ORIGIN);
     expect(parsed.pathname).toBe("/");
-    expect(parsed.searchParams.get("utm_source")).toBe(DEFAULT_UTMS.utm_source);
+    expect(parsed.searchParams.get("utm_source")).toBeNull();
     expect(parsed.searchParams.get("utm_medium")).toBe(DEFAULT_UTMS.utm_medium);
     expect(parsed.searchParams.get("utm_campaign")).toBe(
       DEFAULT_UTMS.utm_campaign,
@@ -46,15 +46,15 @@ describe("buildPlayRedirect", () => {
     expect(parsed.origin).toBe("https://megapot.io");
     expect(parsed.pathname).toBe("/play");
     expect(parsed.searchParams.get("bonus")).toBe("host");
-    expect(parsed.searchParams.get("utm_source")).toBe(DEFAULT_UTMS.utm_source);
+    expect(parsed.searchParams.get("utm_source")).toBeNull();
     expect(parsed.searchParams.has("ref")).toBe(false);
     expect(parsed.searchParams.has("referral")).toBe(false);
   });
 
-  it("stamps deploy-host UTMs from private env instead of the template name", () => {
+  it("stamps deploy-host UTMs from SITE_HOSTNAME instead of the template name", () => {
     const parsed = new URL(
       buildPlayRedirect("https://megapot.io/play", {
-        MEGAPOT_UTM_SOURCE: "deploy-host.example",
+        SITE_HOSTNAME: "https://www.deploy-host.example",
         MEGAPOT_UTM_MEDIUM: "clone",
         MEGAPOT_UTM_CAMPAIGN: "network-clone",
       }),
@@ -63,19 +63,5 @@ describe("buildPlayRedirect", () => {
     expect(parsed.searchParams.get("utm_source")).toBe("deploy-host.example");
     expect(parsed.searchParams.get("utm_medium")).toBe("clone");
     expect(parsed.searchParams.get("utm_campaign")).toBe("network-clone");
-  });
-
-  it("derives utm_source from MEGAPOT_SITE_HOSTNAME when source is unset", () => {
-    const parsed = new URL(
-      buildPlayRedirect(undefined, {
-        MEGAPOT_SITE_HOSTNAME: "https://www.clone-host.example",
-      }),
-    );
-
-    expect(parsed.searchParams.get("utm_source")).toBe("clone-host.example");
-    expect(parsed.searchParams.get("utm_medium")).toBe(DEFAULT_UTMS.utm_medium);
-    expect(parsed.searchParams.get("utm_campaign")).toBe(
-      DEFAULT_UTMS.utm_campaign,
-    );
   });
 });

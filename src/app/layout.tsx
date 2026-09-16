@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Instrument_Sans } from "next/font/google";
 import type { ReactNode } from "react";
-import { siteName } from "@/lib/site";
+import { documentTitle, siteName } from "@/lib/site";
 import "./globals.css";
 
 const sans = Instrument_Sans({
@@ -20,7 +20,7 @@ const mono = IBM_Plex_Mono({
 const name = siteName();
 
 export const metadata: Metadata = {
-  title: name,
+  title: documentTitle(name),
   description:
     "First-party Megapot Network site template. Play hops through a private /go; dashboard and results stay public.",
 };
