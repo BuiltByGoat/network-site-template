@@ -9,14 +9,15 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && tsx scripts/write-pages-routes.ts",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "privacy": "tsx scripts/privacy-scan.ts",
     "utms": "tsx scripts/check-utms.ts",
-    "check": "pnpm lint && pnpm test && pnpm build && pnpm typecheck && pnpm privacy && pnpm utms",
+    "go": "tsx scripts/check-go-redirect.ts",
+    "check": "pnpm lint && pnpm test && pnpm build && pnpm typecheck && pnpm privacy && pnpm utms && pnpm go",
     "preview": "wrangler pages dev out"
   },
   "dependencies": {

@@ -23,4 +23,4 @@ Public pages and generated `out/` must stay free of attribution secrets.
 
 ## Checks
 
-`pnpm privacy` scans generated `out/` for wallet-like hex, invite paths, and known secret patterns. `pnpm utms` confirms Play goes through `/go` and that dashboard/results stamp the default UTMs.
+`pnpm privacy` scans generated `out/` for wallet-like hex, invite paths, and known secret patterns. `pnpm utms` confirms Play goes through `/go` and that dashboard/results stamp the default UTMs. `pnpm go` fails if `out/` contains static `/go` HTML and live-checks that `/go` and `/go/` HTTP 302 with hostname UTMs.

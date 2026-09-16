@@ -4,7 +4,10 @@ import { PLAY_HREF } from "../src/lib/links";
 import { DEFAULT_UTMS } from "../src/lib/utms";
 
 const ROOT = path.resolve(process.cwd(), process.argv[2] ?? "out");
-const GO_SOURCE = path.resolve(process.cwd(), "functions/go.ts");
+const GO_SOURCES = [
+  path.resolve(process.cwd(), "functions/go.ts"),
+  path.resolve(process.cwd(), "src/lib/go-function.ts"),
+];
 
 const REQUIRED_CTAS = ["play", "dashboard", "results"] as const;
 
@@ -84,17 +87,20 @@ async function main(): Promise<void> {
     }
   }
 
-  const goSource = await readFile(GO_SOURCE, "utf8");
+  const goSource = (
+    await Promise.all(GO_SOURCES.map((file) => readFile(file, "utf8")))
+  ).join("\n");
+  if (!goSource.includes("onRequest")) {
+    errors.push("functions/go.ts must export onRequest");
+  }
   if (!goSource.includes("buildPlayRedirect")) {
-    errors.push(
-      "functions/go.ts must call buildPlayRedirect so /go stamps UTMs",
-    );
+    errors.push("/go must call buildPlayRedirect so it stamps UTMs");
   }
   if (!goSource.includes("MEGAPOT_PLAY_DESTINATION")) {
-    errors.push("functions/go.ts must read MEGAPOT_PLAY_DESTINATION");
+    errors.push("/go must read MEGAPOT_PLAY_DESTINATION");
   }
   if (!goSource.includes("302")) {
-    errors.push("functions/go.ts must 302");
+    errors.push("/go must 302");
   }
 
   if (errors.length > 0) {

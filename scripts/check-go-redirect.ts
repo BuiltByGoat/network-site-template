@@ -1,0 +1,149 @@
+import { spawn } from "node:child_process";
+import { readFile, stat } from "node:fs/promises";
+import path from "node:path";
+import {
+  findStaticGoArtifacts,
+  GO_FUNCTION_PATHS,
+  locationHasDefaultUtms,
+  routesJsonForcesGoFunction,
+} from "../src/lib/go-routes";
+import { DEFAULT_UTMS } from "../src/lib/utms";
+
+const ROOT = path.resolve(process.cwd(), process.argv[2] ?? "out");
+const PORT = Number(process.env.GO_CHECK_PORT ?? "4191");
+const ORIGIN = `http://127.0.0.1:${PORT}`;
+
+async function assertNoStaticGo(): Promise<void> {
+  const artifacts = findStaticGoArtifacts(ROOT);
+  if (artifacts.length > 0) {
+    throw new Error(
+      `/go would be a static 200. Remove these from ${ROOT}: ${artifacts.join(", ")}. Play is a Pages Function only.`,
+    );
+  }
+}
+
+async function assertRoutesJson(): Promise<void> {
+  const routesPath = path.join(ROOT, "_routes.json");
+  const source = await readFile(routesPath, "utf8").catch(() => {
+    throw new Error(
+      `Missing ${routesPath}. The /go Function must win via _routes.json include of /go and /go/.`,
+    );
+  });
+
+  if (!routesJsonForcesGoFunction(JSON.parse(source))) {
+    throw new Error(
+      `${routesPath} must include /go and /go/ and must not exclude them.`,
+    );
+  }
+}
+
+async function waitForReady(child: ReturnType<typeof spawn>): Promise<void> {
+  let log = "";
+
+  await new Promise<void>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(
+        new Error(`wrangler pages dev did not become ready\n${log.trim()}`),
+      );
+    }, 45_000);
+
+    const onData = (chunk: Buffer): void => {
+      const text = chunk.toString();
+      log += text;
+      if (text.includes("Ready on")) {
+        clearTimeout(timeout);
+        child.stdout?.off("data", onData);
+        child.stderr?.off("data", onData);
+        resolve();
+      }
+    };
+
+    child.stdout?.on("data", onData);
+    child.stderr?.on("data", onData);
+    child.once("exit", (code) => {
+      clearTimeout(timeout);
+      reject(
+        new Error(`wrangler exited before ready (code ${code})\n${log.trim()}`),
+      );
+    });
+  });
+}
+
+async function assertLiveRedirects(): Promise<void> {
+  const child = spawn(
+    "pnpm",
+    [
+      "exec",
+      "wrangler",
+      "pages",
+      "dev",
+      ROOT,
+      "--port",
+      String(PORT),
+      "--ip",
+      "127.0.0.1",
+    ],
+    {
+      cwd: process.cwd(),
+      stdio: ["ignore", "pipe", "pipe"],
+      env: { ...process.env },
+    },
+  );
+
+  try {
+    await waitForReady(child);
+
+    for (const pathname of GO_FUNCTION_PATHS) {
+      const response = await fetch(`${ORIGIN}${pathname}`, {
+        redirect: "manual",
+      });
+
+      if (response.status === 200) {
+        throw new Error(
+          `${pathname} returned HTTP 200 (static HTML). It must HTTP 302 via functions/go.ts.`,
+        );
+      }
+
+      if (response.status !== 302) {
+        throw new Error(`${pathname} must HTTP 302, got ${response.status}`);
+      }
+
+      const location = response.headers.get("location");
+      if (!location || !locationHasDefaultUtms(location, DEFAULT_UTMS)) {
+        throw new Error(
+          `${pathname} Location must include hostname UTMs, got ${location}`,
+        );
+      }
+    }
+  } finally {
+    child.kill("SIGTERM");
+    await new Promise<void>((resolve) => {
+      const timer = setTimeout(resolve, 2000);
+      child.once("exit", () => {
+        clearTimeout(timer);
+        resolve();
+      });
+    });
+  }
+}
+
+async function main(): Promise<void> {
+  const info = await stat(ROOT).catch(() => null);
+  if (!info?.isDirectory()) {
+    throw new Error(
+      `/go check needs a generated directory at ${ROOT}. Run pnpm build first.`,
+    );
+  }
+
+  await assertNoStaticGo();
+  await assertRoutesJson();
+  await assertLiveRedirects();
+  console.log(
+    `/go check passed: Function 302 + UTMs for ${GO_FUNCTION_PATHS.join(" and ")}; no static 200.`,
+  );
+}
+
+main().catch((error: unknown) => {
+  console.error(error instanceof Error ? error.message : error);
+  process.exitCode = 1;
+});

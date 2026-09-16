@@ -35,7 +35,9 @@ pnpm preview           # wrangler pages dev out
 5. **Node version:** `22` (see `.nvmrc`)
 6. Under **Settings → Variables and Secrets**, set env **names** from the table below. Keep private vars out of `NEXT_PUBLIC_*`.
 
-Pages serves static files from `out/` and the `/go` worker from `functions/go.ts`. Empty `MEGAPOT_PLAY_DESTINATION` 302s to the public Megapot origin only — no referral params, no secrets.
+Pages serves static files from `out/` and the `/go` worker from `functions/go.ts`. `_routes.json` includes `/go` and `/go/` so the Function always wins over a static export (the megapot-build.pages.dev 200-HTML bug). Empty `MEGAPOT_PLAY_DESTINATION` 302s to the public Megapot origin only — no referral params, no secrets.
+
+Never add a Next.js `src/app/go` page. `/go` and `/go/` must HTTP 302 with UTM `Location` headers, never a static 200.
 
 ## Env
 
@@ -67,6 +69,7 @@ Play CTAs are local `/go`. Dashboard and results point at the public Megapot ori
 | `pnpm test` | Redirect + UTM + privacy unit tests |
 | `pnpm privacy` | Scan generated `out/` |
 | `pnpm utms` | Assert Play/dashboard/results + `/go` stamp agreed UTMs |
+| `pnpm go` | Fail if `/go` would be a static 200; live-check Function 302 + UTMs |
 | `pnpm check` | All of the above, including a build |
 
 ## Stack
