@@ -35,9 +35,24 @@ pnpm preview           # wrangler pages dev out
 5. **Node version:** `22` (see `.nvmrc`)
 6. Under **Settings → Variables and Secrets**, set env **names** from the table below. Keep private vars out of `NEXT_PUBLIC_*`.
 
-Pages serves static files from `out/` and the `/go` worker from `functions/go.ts`. `_routes.json` includes `/go` and `/go/` so the Function always wins over a static export (the megapot-build.pages.dev 200-HTML bug). Empty `MEGAPOT_PLAY_DESTINATION` 302s to the public Megapot origin only — no referral params, no secrets.
+Pages serves static files from `out/`. The play hop is a **plain JS** Pages Function:
 
-Never add a Next.js `src/app/go` page. `/go` and `/go/` must HTTP 302 with UTM `Location` headers, never a static 200.
+- `functions/go.js` — `onRequest` / `onRequestGet` 302 with Location UTMs
+- `functions/go/index.js` — same file for trailing-slash `/go/`
+- `out/_routes.json` — `include: ["/*"]`, exclude only real static assets (`/`, `/index.html`, `/_next/*`, `/icon.svg`, 404s). Never exclude `/go`.
+
+Do not add `functions/go.ts` or `account_id` in `wrangler.toml`. Empty `MEGAPOT_PLAY_DESTINATION` 302s to the public Megapot origin only.
+
+Never add a Next.js `src/app/go` page. If `next build` emits `out/go/` or `out/go.html`, the build strips them and **fails** so they cannot win a static 200.
+
+Smoke after deploy (or `pnpm preview`):
+
+```bash
+curl -sI https://YOUR_DOMAIN/go
+curl -sI https://YOUR_DOMAIN/go/
+# Both must be HTTP 302 with Location containing
+# utm_source=network-site-template&utm_medium=template&utm_campaign=network-v1
+```
 
 ## Env
 

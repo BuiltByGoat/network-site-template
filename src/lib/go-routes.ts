@@ -1,13 +1,17 @@
-import { existsSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readdirSync, rmSync, statSync } from "node:fs";
 import path from "node:path";
 
 export const GO_FUNCTION_PATHS = ["/go", "/go/"] as const;
 
-export const PAGES_ROUTES_JSON = {
-  version: 1,
-  include: ["/go", "/go/"],
-  exclude: [] as string[],
-} as const;
+export const FORBIDDEN_GO_FUNCTION_FILES = [
+  "functions/go.ts",
+  "functions/go/index.ts",
+];
+
+export const REQUIRED_GO_FUNCTION_FILES = [
+  "functions/go.js",
+  "functions/go/index.js",
+];
 
 const STATIC_GO_FILES = ["go.html", "go.htm", "go/index.html", "go/index.htm"];
 
@@ -36,6 +40,55 @@ export function findStaticGoArtifacts(root: string): string[] {
   return found;
 }
 
+export function stripStaticGoArtifacts(root: string): string[] {
+  const artifacts = findStaticGoArtifacts(root);
+  const goDir = path.join(root, "go");
+  const goHtml = path.join(root, "go.html");
+  const goHtm = path.join(root, "go.htm");
+
+  if (existsSync(goHtml)) {
+    rmSync(goHtml);
+  }
+  if (existsSync(goHtm)) {
+    rmSync(goHtm);
+  }
+  if (existsSync(goDir) && statSync(goDir).isDirectory()) {
+    rmSync(goDir, { recursive: true, force: true });
+  }
+
+  return artifacts;
+}
+
+export function buildPagesRoutesJson(outRoot: string): {
+  version: 1;
+  include: string[];
+  exclude: string[];
+} {
+  const exclude = new Set<string>(["/", "/index.html", "/_next/*"]);
+
+  if (existsSync(outRoot) && statSync(outRoot).isDirectory()) {
+    for (const entry of readdirSync(outRoot, { withFileTypes: true })) {
+      if (entry.name === "_routes.json" || entry.name === "go") {
+        continue;
+      }
+
+      exclude.add(entry.isDirectory() ? `/${entry.name}/*` : `/${entry.name}`);
+    }
+  }
+
+  for (const rule of [...exclude]) {
+    if (ruleMatchesGo(rule)) {
+      exclude.delete(rule);
+    }
+  }
+
+  return {
+    version: 1,
+    include: ["/*"],
+    exclude: [...exclude].sort(),
+  };
+}
+
 export function routesJsonForcesGoFunction(value: unknown): boolean {
   if (!value || typeof value !== "object") {
     return false;
@@ -59,6 +112,10 @@ export function routesJsonForcesGoFunction(value: unknown): boolean {
     : [];
 
   if (exclude.some((rule) => ruleMatchesGo(rule))) {
+    return false;
+  }
+
+  if (!include.includes("/*")) {
     return false;
   }
 

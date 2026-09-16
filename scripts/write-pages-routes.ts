@@ -1,14 +1,26 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { PAGES_ROUTES_JSON } from "../src/lib/go-routes";
+import {
+  buildPagesRoutesJson,
+  stripStaticGoArtifacts,
+} from "../src/lib/go-routes";
 
 const ROOT = path.resolve(process.cwd(), process.argv[2] ?? "out");
 
 async function main(): Promise<void> {
   await mkdir(ROOT, { recursive: true });
+
+  const removed = stripStaticGoArtifacts(ROOT);
+  if (removed.length > 0) {
+    throw new Error(
+      `Removed static /go artifacts that would 200: ${removed.join(", ")}. Do not add src/app/go.`,
+    );
+  }
+
+  const routes = buildPagesRoutesJson(ROOT);
   await writeFile(
     path.join(ROOT, "_routes.json"),
-    `${JSON.stringify(PAGES_ROUTES_JSON, null, 2)}\n`,
+    `${JSON.stringify(routes, null, 2)}\n`,
     "utf8",
   );
   console.log(`Wrote ${path.join(ROOT, "_routes.json")}`);

@@ -1,10 +1,13 @@
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import {
+  FORBIDDEN_GO_FUNCTION_FILES,
   findStaticGoArtifacts,
   GO_FUNCTION_PATHS,
   locationHasDefaultUtms,
+  REQUIRED_GO_FUNCTION_FILES,
   routesJsonForcesGoFunction,
 } from "../src/lib/go-routes";
 import { DEFAULT_UTMS } from "../src/lib/utms";
@@ -12,6 +15,21 @@ import { DEFAULT_UTMS } from "../src/lib/utms";
 const ROOT = path.resolve(process.cwd(), process.argv[2] ?? "out");
 const PORT = Number(process.env.GO_CHECK_PORT ?? "4191");
 const ORIGIN = `http://127.0.0.1:${PORT}`;
+
+function assertPlainJsFunctions(): void {
+  for (const relative of REQUIRED_GO_FUNCTION_FILES) {
+    if (!existsSync(path.resolve(process.cwd(), relative))) {
+      throw new Error(`Missing ${relative} (plain JS Pages Function).`);
+    }
+  }
+  for (const relative of FORBIDDEN_GO_FUNCTION_FILES) {
+    if (existsSync(path.resolve(process.cwd(), relative))) {
+      throw new Error(
+        `Remove ${relative}. Competing TS Functions do not invoke on Pages.`,
+      );
+    }
+  }
+}
 
 async function assertNoStaticGo(): Promise<void> {
   const artifacts = findStaticGoArtifacts(ROOT);
@@ -26,13 +44,13 @@ async function assertRoutesJson(): Promise<void> {
   const routesPath = path.join(ROOT, "_routes.json");
   const source = await readFile(routesPath, "utf8").catch(() => {
     throw new Error(
-      `Missing ${routesPath}. The /go Function must win via _routes.json include of /go and /go/.`,
+      `Missing ${routesPath}. The /go Function must win via _routes.json include ["/*"] with /go not excluded.`,
     );
   });
 
   if (!routesJsonForcesGoFunction(JSON.parse(source))) {
     throw new Error(
-      `${routesPath} must include /go and /go/ and must not exclude them.`,
+      `${routesPath} must include ["/*"] and must not exclude /go or /go/.`,
     );
   }
 }
@@ -100,7 +118,7 @@ async function assertLiveRedirects(): Promise<void> {
 
       if (response.status === 200) {
         throw new Error(
-          `${pathname} returned HTTP 200 (static HTML). It must HTTP 302 via functions/go.ts.`,
+          `${pathname} returned HTTP 200 (static HTML). It must HTTP 302 via functions/go.js. Smoke: curl -sI ${pathname} → 302 + Location UTMs.`,
         );
       }
 
@@ -135,6 +153,7 @@ async function main(): Promise<void> {
     );
   }
 
+  assertPlainJsFunctions();
   await assertNoStaticGo();
   await assertRoutesJson();
   await assertLiveRedirects();

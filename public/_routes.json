@@ -1,5 +1,13 @@
 {
   "version": 1,
-  "include": ["/go", "/go/"],
-  "exclude": []
+  "include": ["/*"],
+  "exclude": [
+    "/",
+    "/404.html",
+    "/_next/*",
+    "/_not-found.html",
+    "/_not-found/*",
+    "/icon.svg",
+    "/index.html"
+  ]
 }

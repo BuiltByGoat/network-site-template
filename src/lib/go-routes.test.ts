@@ -1,12 +1,21 @@
-import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  buildPagesRoutesJson,
+  FORBIDDEN_GO_FUNCTION_FILES,
   findStaticGoArtifacts,
-  PAGES_ROUTES_JSON,
+  REQUIRED_GO_FUNCTION_FILES,
   routesJsonForcesGoFunction,
 } from "./go-routes";
+import { DEFAULT_UTMS } from "./utms";
 
 describe("Next must not export a static /go page", () => {
   it("has no src/app/go route that would 200", () => {
@@ -15,6 +24,37 @@ describe("Next must not export a static /go page", () => {
     expect(existsSync(path.join(process.cwd(), "src/pages/go.tsx"))).toBe(
       false,
     );
+  });
+});
+
+describe("Pages Function files", () => {
+  it("ships identical plain JS handlers and no competing TS Function", () => {
+    for (const relative of REQUIRED_GO_FUNCTION_FILES) {
+      expect(existsSync(path.join(process.cwd(), relative))).toBe(true);
+    }
+    for (const relative of FORBIDDEN_GO_FUNCTION_FILES) {
+      expect(existsSync(path.join(process.cwd(), relative))).toBe(false);
+    }
+
+    const go = path.join(process.cwd(), "functions/go.js");
+    const slash = path.join(process.cwd(), "functions/go/index.js");
+    const goSource = readRequired(go);
+    const slashSource = readRequired(slash);
+
+    expect(slashSource).toBe(goSource);
+    expect(goSource).toContain("export function onRequest");
+    expect(goSource).toContain("export function onRequestGet");
+    expect(goSource).toContain("302");
+    expect(goSource).toContain("MEGAPOT_PLAY_DESTINATION");
+    expect(goSource).toContain(DEFAULT_UTMS.utm_source);
+    expect(goSource).toContain(DEFAULT_UTMS.utm_medium);
+    expect(goSource).toContain(DEFAULT_UTMS.utm_campaign);
+    expect(goSource).not.toContain('from "');
+  });
+
+  it("does not put account_id in wrangler.toml", () => {
+    const wrangler = readRequired(path.join(process.cwd(), "wrangler.toml"));
+    expect(wrangler).not.toMatch(/account_id/);
   });
 });
 
@@ -36,21 +76,39 @@ describe("findStaticGoArtifacts", () => {
 });
 
 describe("routesJsonForcesGoFunction", () => {
-  it("requires /go and /go/ to invoke the Function", () => {
-    expect(routesJsonForcesGoFunction(PAGES_ROUTES_JSON)).toBe(true);
+  it("requires include /* and never excludes /go", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "go-routes-"));
+    writeFileSync(path.join(root, "index.html"), "<html>home</html>");
+    writeFileSync(path.join(root, "icon.svg"), "<svg></svg>");
+    mkdirSync(path.join(root, "_next"));
+
+    const routes = buildPagesRoutesJson(root);
+    expect(routes.include).toEqual(["/*"]);
+    expect(routes.exclude).toContain("/");
+    expect(routes.exclude).toContain("/index.html");
+    expect(routes.exclude).toContain("/_next/*");
+    expect(routes.exclude).toContain("/icon.svg");
+    expect(routes.exclude).not.toContain("/go");
+    expect(routes.exclude).not.toContain("/go/");
+    expect(routesJsonForcesGoFunction(routes)).toBe(true);
+
     expect(
       routesJsonForcesGoFunction({
         version: 1,
-        include: ["/go"],
+        include: ["/go", "/go/"],
         exclude: [],
       }),
     ).toBe(false);
     expect(
       routesJsonForcesGoFunction({
         version: 1,
-        include: ["/go", "/go/"],
+        include: ["/*"],
         exclude: ["/go"],
       }),
     ).toBe(false);
   });
 });
+
+function readRequired(file: string): string {
+  return readFileSync(file, "utf8");
+}
