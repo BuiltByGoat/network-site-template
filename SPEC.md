@@ -1,15 +1,17 @@
 # network-site-template
 
-First-party **Megapot Network** cloneable site template.
+First-party **Megapot Network** cloneable **player** marketing shell.
 
 ## Why this exists
 
 `BuiltByGoat/megapot-templates` and the old `megapot-build-template` lineage are deprecated for new work.
 Those kits were slapped together. This repo is the clean replacement: cribble-first, Cloudflare Pages, private attribution.
 
+Operators clone this from megapot.build, insert *their* referral attribution in private env, and ship sites that send **players** to Megapot. Public `/` copy is a lottery/jackpot landing — never a developer advertisement.
+
 ## Product goals
 
-1. Developers clone this repo (or use it via megapot.build factory later) and ship a marketing site or light product shell that drives Megapot player/developer signups.
+1. Developers clone this repo (or use it via megapot.build factory later) and ship a player marketing site that sends people to play Megapot. Public `/` copy is for players — daily jackpot, how it works, Play CTA, trust, results — never clone/export/factory/template language on the page.
 2. Public pages never show referral codes, wallet addresses, or other attribution secrets (see PRIVACY).
 3. Play CTAs go through a private `/go` hop; destination URL + any referral params live only in host env.
 4. All outbound Megapot links stamp hostname UTMs (campaign params, not secrets).
@@ -19,6 +21,7 @@ Those kits were slapped together. This repo is the clean replacement: cribble-fi
 - Do not copy HTML/CSS from megapot-templates (daily/degen/formal/fun).
 - Do not embed Megapot’s old starter-kit wizard UI.
 - Do not put ELOTTO, wallet addresses, or invite paths in public markup, README badges, or footers.
+- Do not advertise clone, export, factory, env, or “site template” language on public `/`. Operators read README.
 
 ## Stack (locked)
 
@@ -31,7 +34,7 @@ Those kits were slapped together. This repo is the clean replacement: cribble-fi
 
 ## Ship in v1
 
-1. **Marketing shell** at `/` — hero, value props, Play CTA → `/go`, dashboard + megapotresults.com links with UTMs, document title `Play on Megapot | {SITE_NAME}`, footer hub → megapot.network.
+1. **Player marketing shell** at `/` — hero (daily jackpot / play Megapot), how it works, Play CTA → `/go`, dashboard + megapotresults.com links with UTMs, document title `Play on Megapot | {SITE_NAME}`, footer hub → megapot.network. No developer-ad hero copy (no “ship a jackpot front door”, clone/export, “Network template”, factory/env explainers).
 2. **`/go` Function** — reads `MEGAPOT_PLAY_DESTINATION` (private); appends `utm_source`, `utm_medium`, `utm_campaign` from config; 302. Empty env → public Megapot origin only (no secrets).
 3. **Privacy scan script** — fails CI if wallet-like hex, invite paths, or known secret patterns appear in `out/` / public sources.
 4. **UTM check script** — Play/dashboard/results and `/go` stamp agreed UTMs.

@@ -1,8 +1,10 @@
 # network-site-template
 
-First-party **Megapot Network** cloneable site template. Cribble-first. Cloudflare Pages. Private `/go`.
+First-party **Megapot Network** cloneable **player** marketing shell. Cribble-first. Cloudflare Pages. Private `/go`.
 
 **Not** derived from `megapot-templates`, `megapot-build-template`, or the old starter-kit lineage. See [SPEC.md](./SPEC.md) and [PRIVACY.md](./PRIVACY.md).
+
+Public `/` is a lottery/jackpot landing for **players**. Keep clone, env, and deploy notes in this README — never in `src/app` markup.
 
 ## Clone → build
 

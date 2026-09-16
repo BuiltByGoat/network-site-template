@@ -24,6 +24,10 @@ body {
   color: var(--paper);
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: var(--font-sans);
   font-size: 18px;
@@ -194,6 +198,21 @@ h1 {
   letter-spacing: 0;
 }
 
+.aside-link {
+  display: inline-block;
+  margin-top: 18px;
+  color: var(--ice);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.aside-link:hover,
+.aside-link:focus-visible {
+  color: var(--green);
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -222,7 +241,6 @@ h1 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 18px;
-  padding: 8px 0 64px;
 }
 
 .prop {
@@ -242,6 +260,20 @@ h1 {
   background: rgb(155 220 245 / 5%);
 }
 
+.how {
+  scroll-margin-top: 24px;
+  padding-bottom: 64px;
+}
+
+.section-label {
+  margin: 0 0 18px;
+  color: var(--ember);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
 .prop span {
   display: block;
   margin-bottom: 18px;
@@ -252,10 +284,12 @@ h1 {
   text-transform: uppercase;
 }
 
-.prop h2 {
+.prop h2,
+.prop h3 {
   margin: 0 0 10px;
   font-size: 28px;
   letter-spacing: -0.04em;
+  font-weight: 560;
 }
 
 .prop p {
@@ -306,6 +340,7 @@ h1 {
     padding-top: 48px;
   }
 
+  .how,
   .props {
     width: 100%;
   }
