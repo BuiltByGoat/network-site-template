@@ -31,7 +31,7 @@ Those kits were slapped together. This repo is the clean replacement: cribble-fi
 
 ## Ship in v1
 
-1. **Marketing shell** at `/` — hero, value props, Play CTA → `/go`, dashboard/results links with UTMs, privacy-clean footer.
+1. **Marketing shell** at `/` — hero, value props, Play CTA → `/go`, dashboard + megapotresults.com links with UTMs, document title `Play on Megapot | {SITE_NAME}`, footer hub → megapot.network.
 2. **`/go` Function** — reads `MEGAPOT_PLAY_DESTINATION` (private); appends `utm_source`, `utm_medium`, `utm_campaign` from config; 302. Empty env → public Megapot origin only (no secrets).
 3. **Privacy scan script** — fails CI if wallet-like hex, invite paths, or known secret patterns appear in `out/` / public sources.
 4. **UTM check script** — Play/dashboard/results and `/go` stamp agreed UTMs.
@@ -43,16 +43,25 @@ Those kits were slapped together. This repo is the clean replacement: cribble-fi
 
 | Name | Public? | Role |
 | --- | --- | --- |
-| `NEXT_PUBLIC_SITE_NAME` | yes | Site label |
+| `NEXT_PUBLIC_SITE_NAME` | yes | Site label; title is `Play on Megapot \| {SITE_NAME}` |
+| `SITE_HOSTNAME` | no | Deploy host; hostname-style `utm_source` |
+| `MEGAPOT_SITE_HOSTNAME` | no | Alias of `SITE_HOSTNAME` |
+| `MEGAPOT_UTM_SOURCE` | no | Optional explicit `utm_source` if hostname envs are unset |
+| `MEGAPOT_UTM_MEDIUM` | no | `utm_medium` override (default `template`) |
+| `MEGAPOT_UTM_CAMPAIGN` | no | `utm_campaign` override (default `network-v1`) |
 | `MEGAPOT_PLAY_DESTINATION` | no | Absolute play URL for `/go` |
 | `MEGAPOT_REFERRER_ADDRESS` | no | Reserved; unused in marketing shell |
 | `MEGAPOT_API_KEY` | no | Reserved; never `NEXT_PUBLIC_` |
 
-## Default UTMs (v1)
+## UTMs (v1)
 
-- `utm_source=network-site-template` (factory may override later to hostname)
-- `utm_medium=template`
-- `utm_campaign=network-v1`
+`utm_source` comes from `SITE_HOSTNAME` (hostname-style), not the literal `network-site-template`.
+
+- `utm_source` ← hostname from `SITE_HOSTNAME`, else `MEGAPOT_SITE_HOSTNAME`, else `MEGAPOT_UTM_SOURCE`, else Pages `CF_PAGES_URL`
+- `utm_medium` ← `MEGAPOT_UTM_MEDIUM`, else `template`
+- `utm_campaign` ← `MEGAPOT_UTM_CAMPAIGN`, else `network-v1`
+
+Latest results CTA → `https://megapotresults.com` (cohort SoT), not drawingresults as primary. Footer hub → `https://megapot.network`. Both stamp the same campaign UTMs.
 
 ## Done when
 
